@@ -4,11 +4,15 @@ __author__ = "Oliver Sick"
 
 import sys
 import random
+import time
+import os
+import json
 
 class Amazons:
     
     empty_sq="·"
     block_sq="▒"
+    #block_sq="▉"
     w_amazon_sq="w"
     b_amazon_sq="b"
 
@@ -48,7 +52,7 @@ class Amazons:
 
     def clear_sq(self,x,y):
         if self.board[x][y]==Amazons.b_amazon_sq or self.board[x][y]==Amazons.w_amazon_sq:
-            self.pieces.remove(self.pieces[self.board[x][y]].index(f"{x},{y}"))
+            self.pieces[self.board[x][y]].pop(self.pieces[self.board[x][y]].index(f"{x},{y}"))
         self.board[x][y]=Amazons.empty_sq
 
 
@@ -57,28 +61,45 @@ class Amazons:
 
 
     def get_moves(self,x,y):
+        _moves=[]
+        _moves.extend(self.iter_moves(x, y,  1,  0))    
+        _moves.extend(self.iter_moves(x, y,  1,  1))    
+        _moves.extend(self.iter_moves(x, y,  0,  1))
+        _moves.extend(self.iter_moves(x, y, -1,  1))
+        _moves.extend(self.iter_moves(x, y, -1,  0))
+        _moves.extend(self.iter_moves(x, y, -1, -1))
+        _moves.extend(self.iter_moves(x, y,  0, -1))
+        _moves.extend(self.iter_moves(x, y,  1, -1))
         moves=[]
-        moves.extend(self.iter_moves(x,y, 1, 0))    
-        moves.extend(self.iter_moves(x,y, 1, 1))    
-        moves.extend(self.iter_moves(x,y, 0, 1))
-        moves.extend(self.iter_moves(x,y,-1, 1))
-        moves.extend(self.iter_moves(x,y,-1, 0))
-        moves.extend(self.iter_moves(x,y,-1,-1))
-        moves.extend(self.iter_moves(x,y, 0,-1))
-        moves.extend(self.iter_moves(x,y, 1,-1))
+        for m in _moves:
+            x1=int(m.split(",")[0])
+            y1=int(m.split(",")[1])
+            moves.extend(self.iter_moves(x1, y1,  1,  0, x, y))    
+            moves.extend(self.iter_moves(x1, y1,  1,  1, x, y))    
+            moves.extend(self.iter_moves(x1, y1,  0,  1, x, y))
+            moves.extend(self.iter_moves(x1, y1, -1,  1, x, y))
+            moves.extend(self.iter_moves(x1, y1, -1,  0, x, y))
+            moves.extend(self.iter_moves(x1, y1, -1, -1, x, y))
+            moves.extend(self.iter_moves(x1, y1,  0, -1, x, y))
+            moves.extend(self.iter_moves(x1, y1,  1, -1, x, y))
         return moves
 
 
-    def iter_moves(self,x,y,dir_x,dir_y):
+    def iter_moves(self,x,y,dir_x,dir_y,x_ignore=None,y_ignore=None):
         itermoves=[]
-        sq_from=f"{x},{y}"
-        x+=dir_x
-        y+=dir_y
+        x1=x+dir_x
+        y1=y+dir_y
         try:
-            while self.board[x][y]==Amazons.empty_sq:
-                itermoves.append(f"{sq_from}-{x},{y}")
-                x+=dir_x
-                y+=dir_y
+            if (x_ignore is not None and y_ignore is not None):
+                while self.board[x1][y1] == Amazons.empty_sq or (x1==x_ignore and y1==y_ignore):
+                    itermoves.append(f"{x_ignore},{y_ignore},{x},{y},{x1},{y1}")
+                    x1+=dir_x
+                    y1+=dir_y
+            else:
+                while self.board[x1][y1] == Amazons.empty_sq:
+                    itermoves.append(f"{x1},{y1}")
+                    x1+=dir_x
+                    y1+=dir_y
         except: pass
         return itermoves
 
@@ -87,41 +108,57 @@ class Amazons:
         return self.board[x][y]==self.active
 
 
-    def move(self,x_from,y_from,x_to,y_to,x_block,y_block):
-        if self.get_moves(x_from,y_from).count(f"{x_from},{y_from}-{x_to},{y_to}")>0 and self.get_moves(x_to,y_to).count(f"{x_to},{y_to}-{x_block},{y_block}")>0 and self.can_move(x_from,y_from):
+    def move(self, x_from, y_from, x_to, y_to, x_block, y_block):
+        if self.get_moves(x_from, y_from).count(f"{x_from},{y_from},{x_to},{y_to},{x_block},{y_block}")>0 \
+        and self.can_move(x_from, y_from):
             self.clear_sq(x_from,y_from)
-            self.set_amazon(x_to,y_to)
-            self.set_block(x_block,y_block)
+            self.set_amazon(x_to, y_to)
+            self.set_block(x_block, y_block)
             self.active=Amazons.b_amazon_sq if self.active==Amazons.w_amazon_sq else Amazons.w_amazon_sq
 
     def print(self):
-        print("═".join(self.board[0]))
-        for i in range(self.boardsize,0,-1): print(" ".join(self.board[i]))
-        print("═".join(self.board[self.boardsize+1]))
+        board="═".join(self.board[0])
+        for i in range(self.boardsize,0,-1): board+="\n"+" ".join(self.board[i])
+        board+="\n"+"═".join(self.board[self.boardsize+1])
+        board=board.replace(Amazons.block_sq+" ",Amazons.block_sq+Amazons.block_sq)
+        print(board.replace(" "+Amazons.block_sq,Amazons.block_sq+Amazons.block_sq))
 
-    def play(self,type="random"):
+    def play(self,type="random",display=False):
         active_moves=[]
-        for amazon in self.pieces:
-            x_from=amazon.split(",")[0]
-            y_from=amazon.split(",")[1]
-            active_moves.extend(self.get_moves(self.pieces[self.active]))
+        for amazon in self.pieces[self.active]:
+            x_from=int(amazon.split(",")[0])
+            y_from=int(amazon.split(",")[1])
+            active_moves.extend(self.get_moves(x_from,y_from))
         while len(active_moves)>0:
-            active_moves
-
-
+            if display:
+                os.system('cls')
+                self.print()
+            rnd_move=random.choice(active_moves)
+            coords=[int(x) for x in rnd_move.split(",")]
+            self.move(coords[0],coords[1],coords[2],coords[3],coords[4],coords[5])
+            active_moves=[]
+            for amazon in self.pieces[self.active]:
+                x_from=int(amazon.split(",")[0])
+                y_from=int(amazon.split(",")[1])
+                active_moves.extend(self.get_moves(x_from,y_from))
+        return self.active
+        
 #######################################################################################################################
 # main
 #######################################################################################################################
 
 if __name__ == "__main__":
-    test=True
-
-    am = Amazons(6)
-    am.set_amazon(1,2,"b")
-    am.set_amazon(3,3,"w")
-    am.set_block(2,4)
-    print(len(am.get_moves(1,2)))
-    am.print()
-    am.move(3,3,5,5,4,4)
-    am.print()
-    sys.exit()
+    max_size= 8 if len(sys.argv)<2 else int(sys.argv[1])
+    for size in range(2,max_size+1):
+        score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
+        for i in range(500):
+            am = Amazons(size)
+            am.set_amazon(1,1,"b")
+            #am.set_amazon(1,size,"b")
+            #am.set_amazon(size,size,"w")
+            am.set_amazon(size,1,"w")
+            #if i==0: am.print()
+            v=am.play()
+            score[v]+=1
+        #print(size, json.dumps(score))
+        print(size,"white wins:",score[Amazons.w_amazon_sq]/5,"%")
