@@ -148,17 +148,34 @@ class Amazons:
 #######################################################################################################################
 
 if __name__ == "__main__":
-    max_size= 8 if len(sys.argv)<2 else int(sys.argv[1])
-    for size in range(2,max_size+1):
-        score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
-        for i in range(500):
-            am = Amazons(size)
-            am.set_amazon(1,1,"b")
-            #am.set_amazon(1,size,"b")
-            #am.set_amazon(size,size,"w")
-            am.set_amazon(size,1,"w")
-            #if i==0: am.print()
-            v=am.play()
-            score[v]+=1
-        #print(size, json.dumps(score))
-        print(size,"white wins:",score[Amazons.w_amazon_sq]/5,"%")
+    # min_size= 2 if len(sys.argv)<2 else int(sys.argv[1])
+    # max_size= 6 if len(sys.argv)<3 else int(sys.argv[2])
+    # for size in range(min_size,max_size+1):
+    #     score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
+    #     for i in range(500):
+    #         am = Amazons(size)
+    #         am.set_amazon(1,1,"b")
+    #         am.set_amazon(1,size,"b")
+    #         am.set_amazon(size,size,"w")
+    #         am.set_amazon(size,1,"w")
+    #         v=am.play()
+    #         score[v]+=1
+    #     print(size,"white wins:",score[Amazons.w_amazon_sq]/5,"%")
+    
+    loosing_score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
+    loops=1000
+    for i in range(1,loops+1):
+        am = Amazons(10)
+        am.set_amazon(1,4,"b")
+        am.set_amazon(1,7,"b")
+        am.set_amazon(4,1,"b")
+        am.set_amazon(4,10,"b")
+        am.set_amazon(10,4,"w")
+        am.set_amazon(10,7,"w")
+        am.set_amazon(7,1,"w")
+        am.set_amazon(7,10,"w")
+        loosing_score[am.play()]+=1
+        del am
+        if i % 10 == 0: 
+            print(i," games, white win rate:",round(100-loosing_score[Amazons.w_amazon_sq]/i*100),"%")
+        
