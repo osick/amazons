@@ -11,10 +11,12 @@ import json
 class Amazons:
     
     empty_sq="·"
-    block_sq="▒"
+    #block_sq="▒"
     #block_sq="▉"
-    w_amazon_sq="w"
-    b_amazon_sq="b"
+    #block_sq="▀"
+    block_sq="▄"
+    w_amazon_sq="W"
+    b_amazon_sq="B"
 
     def __init__(self, boardsize: int):
         self.boardsize=boardsize
@@ -120,10 +122,12 @@ class Amazons:
         board="═".join(self.board[0])
         for i in range(self.boardsize,0,-1): board+="\n"+" ".join(self.board[i])
         board+="\n"+"═".join(self.board[self.boardsize+1])
-        board=board.replace(Amazons.block_sq+" ",Amazons.block_sq+Amazons.block_sq)
-        print(board.replace(" "+Amazons.block_sq,Amazons.block_sq+Amazons.block_sq))
+        #board=board.replace(Amazons.block_sq+" ",Amazons.block_sq+Amazons.block_sq)
+        #print(board.replace(" "+Amazons.block_sq,Amazons.block_sq+Amazons.block_sq))
+        print(board)
 
-    def play(self,type="random",display=False):
+    def play(self,type="random",display=False, delay=0):
+        mvs=0
         active_moves=[]
         for amazon in self.pieces[self.active]:
             x_from=int(amazon.split(",")[0])
@@ -133,35 +137,49 @@ class Amazons:
             if display:
                 os.system('cls')
                 self.print()
+                time.sleep(delay)
             rnd_move=random.choice(active_moves)
             coords=[int(x) for x in rnd_move.split(",")]
             self.move(coords[0],coords[1],coords[2],coords[3],coords[4],coords[5])
+            mvs+=1
             active_moves=[]
             for amazon in self.pieces[self.active]:
                 x_from=int(amazon.split(",")[0])
                 y_from=int(amazon.split(",")[1])
                 active_moves.extend(self.get_moves(x_from,y_from))
-        return self.active
+        return self.active,mvs
         
-#######################################################################################################################
-# main
-#######################################################################################################################
+def test1():
+    print("test1...")
+    size= 8
+    am = Amazons(size)
+    am.set_amazon(1,1,"b")
+    am.set_amazon(1,size,"b")
+    am.set_amazon(size,size,"w")
+    am.set_amazon(size,1,"w")
+    v,mvs=am.play(display=False,delay=0.01)
+    print(f"{v} has won after {mvs} moves")
+    print("test1 done!")
 
-if __name__ == "__main__":
-    # min_size= 2 if len(sys.argv)<2 else int(sys.argv[1])
-    # max_size= 6 if len(sys.argv)<3 else int(sys.argv[2])
-    # for size in range(min_size,max_size+1):
-    #     score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
-    #     for i in range(500):
-    #         am = Amazons(size)
-    #         am.set_amazon(1,1,"b")
-    #         am.set_amazon(1,size,"b")
-    #         am.set_amazon(size,size,"w")
-    #         am.set_amazon(size,1,"w")
-    #         v=am.play()
-    #         score[v]+=1
-    #     print(size,"white wins:",score[Amazons.w_amazon_sq]/5,"%")
-    
+def test2():
+    print("test2...")
+    min_size= 2 
+    max_size= 6
+    for size in range(min_size,max_size+1):
+        score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
+        for i in range(500):
+            am = Amazons(size)
+            am.set_amazon(1,1,"b")
+            am.set_amazon(1,size,"b")
+            am.set_amazon(size,size,"w")
+            am.set_amazon(size,1,"w")
+            v,m=am.play(display=False,delay=0)
+            score[v]+=1
+        print(size,"white wins:",score[Amazons.w_amazon_sq]/5,"%")
+    print("test2 done!")
+
+def test3():
+    print("test3...")
     loosing_score={Amazons.b_amazon_sq:0,Amazons.w_amazon_sq:0}
     loops=1000
     for i in range(1,loops+1):
@@ -174,8 +192,18 @@ if __name__ == "__main__":
         am.set_amazon(10,7,"w")
         am.set_amazon(7,1,"w")
         am.set_amazon(7,10,"w")
-        loosing_score[am.play()]+=1
+        v,m=am.play()
+        loosing_score[v]+=1
         del am
         if i % 10 == 0: 
-            print(i," games, white win rate:",round(100-loosing_score[Amazons.w_amazon_sq]/i*100),"%")
-        
+            print(i," games, white win rate:",round(100-loosing_score[Amazons.w_amazon_sq]/i*100),"%")#
+    print("test2 done!")
+
+#######################################################################################################################
+# main
+#######################################################################################################################
+
+if __name__ == "__main__":
+    test1()    
+    test2()    
+    test3()    
