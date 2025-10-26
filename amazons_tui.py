@@ -112,7 +112,7 @@ class AmazonsTUI:
             char = "♛"
             style = self.COLORS['black_amazon']
         elif cell == Amazons.block_sq:
-            char = "█"
+            char = "🔥"
             style = self.COLORS['block']
         else:
             char = "·"
@@ -194,7 +194,7 @@ class AmazonsTUI:
         legend.append("White Amazon  ")
         legend.append("♛ ", style=self.COLORS['black_amazon'])
         legend.append("Black Amazon\n")
-        legend.append("█ ", style=self.COLORS['block'])
+        legend.append("🔥 ", style=self.COLORS['block'])
         legend.append("Arrow Block   ")
         legend.append("◉ ", style=self.COLORS['possible_move'])
         legend.append("Possible Move\n")

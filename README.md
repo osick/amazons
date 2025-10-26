@@ -44,7 +44,7 @@ python amazons_tui.py
 **How to play:**
 1. Select one of your amazons (White ♛ or Black ♛)
 2. Choose where to move it (highlighted squares show valid moves)
-3. Choose where to shoot an arrow (creates a permanent block █)
+3. Choose where to shoot an arrow (creates a permanent block 🔥)
 4. The game ends when a player has no valid moves left
 
 ### Run Classic Tests
